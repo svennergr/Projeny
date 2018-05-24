@@ -43,7 +43,7 @@ class JunctionHelper:
         # Note: mklink is a shell command and can't be executed otherwise
         self._sys.executeShellCommand('mklink /J "{0}" "{1}"'.format(linkPath, actualPath))
 
-    def removeJunctionsInDirectory(self, dirPath, recursive):
+    def removeJunctionsInDirectory(self, dirPath, recursive, projectConfig = None):
         fullDirPath = self._varMgr.expandPath(dirPath)
 
         if not os.path.exists(fullDirPath):
@@ -60,7 +60,16 @@ class JunctionHelper:
                     os.remove(fullPath + '.meta')
 
                 self._log.debug('Removed directory for package "{0}"'.format(name))
+                # check if parent directory is empty and in project config
+                if not projectConfig is None:
+                    projectPackage = projectConfig.getAssetByName(name)
+                    if type(projectPackage) is dict:
+                        projectPackagePath = self._varMgr.expandPath('[ProjectAssetsDir]' + projectPackage["folder"])
+                        if len(os.listdir(projectPackagePath)) == 0:
+                            self._log.debug("Removing path {0}".format(projectPackagePath))
+                            self._sys.executeShellCommand('rmdir "{0}"'.format(projectPackagePath))
+
             else:
                 if recursive:
-                    self.removeJunctionsInDirectory(fullPath, True)
+                    self.removeJunctionsInDirectory(fullPath, True, projectConfig)
 

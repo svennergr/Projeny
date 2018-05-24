@@ -51,6 +51,10 @@ class ProjectSchemaLoader:
         config.projectSettingsPath = yamlConfig.getString('ProjectSettingsPath')
         config.customDirectories = yamlConfig.tryGetDictionary({}, 'CustomPackageDirectories')
 
+        customDirectories = config.customDirectories
+        for key, value in customDirectories.items():
+            self._varMgr.set(key, value)
+            
         # Remove duplicates
         # config.assetsFolderDict = dict(set(config.assetsFolder))
         tmpList = []
@@ -227,9 +231,6 @@ class ProjectSchemaLoader:
             assertThat(not packageName in packageMap, "Found duplicate package with name '{0}'", packageName)
 
             packageFolder = packageRef.folder if hasattr(packageRef, 'folder') else ''
-            customDirectories = projectConfig.customDirectories
-            for key, value in customDirectories.items():
-                self._varMgr.set(key, value)
 
             packageFolder = self._varMgr.expand(packageFolder)
             packageMap[packageName] = PackageInfo(

@@ -402,7 +402,8 @@ ProjectSettingsPath: '{0}'
 
     def clearProjectGeneratedFiles(self, projectName):
         with self._log.heading('Clearing generated files for project {0}'.format(projectName)):
-            self._junctionHelper.removeJunctionsInDirectory('[UnityProjectsDir]/{0}'.format(projectName), True)
+            projectConfig = self._schemaLoader.loadProjectConfig(projectName)
+            self._junctionHelper.removeJunctionsInDirectory('[UnityProjectsDir]/{0}'.format(projectName), True, projectConfig)
             for platform in Platforms.All:
                 self.setPathsForProjectPlatform(projectName, platform)
 
