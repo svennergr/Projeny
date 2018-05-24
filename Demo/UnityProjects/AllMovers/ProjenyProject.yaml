@@ -1,8 +1,14 @@
+# these directories are set in the Assets-folder
+CustomPackageDirectories:
+    MoverPackage: '/TestPackage'
+
 AssetsFolder:
-- AllMovers
-- CommonShapeMover
-- CubeMover
+- name: AllMovers
+  folder: '[MoverPackage]/Mover'
+- name: CommonShapeMover
+  folder: '/Mover'
 - SphereMover
+
 ProjectSettingsPath: '[ProjectRoot]/ProjectSettings'
 TargetPlatforms:
 - Windows
