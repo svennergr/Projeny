@@ -5,6 +5,7 @@ class ProjectConfig:
     def __init__(self):
         self.pluginsFolder = []
         self.assetsFolder = []
+        self.customDirectories = {}
         self.solutionProjects = []
         self.solutionFolders = []
         self.packageFolders = []

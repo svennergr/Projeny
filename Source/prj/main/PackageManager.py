@@ -318,9 +318,10 @@ ProjectSettingsPath: '{0}'
             assertThat(os.path.exists(packageInfo.dirPath),
                "Could not find package with name '{0}' while processing schema '{1}'.  See build log for full object graph to see where it is referenced".format(packageInfo.name, schema.name))
 
-            outputPackageDir = self._varMgr.expandPath(packageInfo.outputDirVar)
+            outputPackageDir = self._varMgr.expandPath(packageInfo.outputDirVar + packageInfo.customFolderPath)
 
             linkDir = os.path.join(outputPackageDir, packageInfo.name)
+            self._log.debug("NEW LINKDIR: {0}".format(linkDir))
 
             assertThat(not os.path.exists(linkDir), "Did not expect this path to exist: '{0}'".format(linkDir))
 

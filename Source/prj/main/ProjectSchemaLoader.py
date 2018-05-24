@@ -17,7 +17,7 @@ from prj.main.CsProjAnalyzer import NsPrefix, CsProjAnalyzer
 from prj.main.ProjenyConstants import ProjectConfigFileName, PackageConfigFileName, ProjectUserConfigFileName
 from prj.main.ProjectConfig import ProjectConfig
 
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 import xml.etree.ElementTree as ET
 
 class ProjectSchemaLoader:
@@ -49,9 +49,23 @@ class ProjectSchemaLoader:
         config.solutionFolders = yamlConfig.tryGetOrderedDictionary(OrderedDict(), 'SolutionFolders')
         config.packageFolders = yamlConfig.getList('PackageFolders')
         config.projectSettingsPath = yamlConfig.getString('ProjectSettingsPath')
+        config.customDirectories = yamlConfig.tryGetDictionary({}, 'CustomPackageDirectories')
 
         # Remove duplicates
-        config.assetsFolder = list(set(config.assetsFolder))
+        # config.assetsFolderDict = dict(set(config.assetsFolder))
+        tmpList = []
+        for x in config.assetsFolder:
+            if type(x) is dict:
+                tmpList.append(x["name"])
+            else:
+                tmpList.append(x)
+
+        duplicates = [item for item, count in Counter(tmpList).items() if count > 1]
+        self._log.debug("duplicates {0}".format(duplicates))
+        for d in duplicates:
+            self._log.debug("removing {0}".format(d))
+            tmpList.remove(d)
+
         config.pluginsFolder = list(set(config.pluginsFolder))
 
         for packageName in config.pluginsFolder:
@@ -147,6 +161,7 @@ class ProjectSchemaLoader:
 
     def _getAllPackageInfos(self, projectConfig, platform):
         configRefDesc = "'{0}' or '{1}'".format(ProjectConfigFileName, ProjectUserConfigFileName)
+
         allPackageRefs = [PackageReference(x, configRefDesc) for x in projectConfig.pluginsFolder + projectConfig.assetsFolder]
 
         packageMap = {}
@@ -156,6 +171,7 @@ class ProjectSchemaLoader:
         for packageRef in allPackageRefs:
 
             packageName = packageRef.name
+
             packageDir = None
 
             for packageFolder in projectConfig.packageFolders:
@@ -183,7 +199,7 @@ class ProjectSchemaLoader:
 
             isPluginsDir = True
 
-            if packageName in projectConfig.assetsFolder:
+            if packageName in self._getAllPackRefs(projectConfig.assetsFolder):
                 assertThat(not packageName in projectConfig.pluginsFolder)
                 isPluginsDir = False
 
@@ -200,7 +216,7 @@ class ProjectSchemaLoader:
 
             if assemblyProjInfo != None:
                 for assemblyDependName in assemblyProjInfo.dependencies:
-                    if assemblyDependName not in [x.name for x in allPackageRefs]:
+                    if assemblyDependName not in self._getAllPackRefNames(allPackageRefs):
                         allPackageRefs.append(PackageReference(assemblyDependName, sourceDesc))
 
                 explicitDependencies += assemblyProjInfo.dependencies
@@ -210,16 +226,42 @@ class ProjectSchemaLoader:
 
             assertThat(not packageName in packageMap, "Found duplicate package with name '{0}'", packageName)
 
+            packageFolder = packageRef.folder if hasattr(packageRef, 'folder') else ''
+            customDirectories = projectConfig.customDirectories
+            for key, value in customDirectories.items():
+                self._varMgr.set(key, value)
+
+            packageFolder = self._varMgr.expand(packageFolder)
             packageMap[packageName] = PackageInfo(
                 isPluginsDir, packageName, packageConfig, createCustomVsProject,
-                explicitDependencies, forcePluginsDir, folderType, assemblyProjInfo, packageDir, groupedDependencies)
+                explicitDependencies, forcePluginsDir, folderType, assemblyProjInfo, packageDir, groupedDependencies, packageFolder)
 
             for dependName in (explicitDependencies + groupedDependencies + extraDependencies):
-                if dependName not in [x.name for x in allPackageRefs]:
+                if dependName not in self._getAllPackRefNames(allPackageRefs):
                     # Yes, python is ok with changing allPackageRefs even while iterating over it
                     allPackageRefs.append(PackageReference(dependName, sourceDesc))
 
         return packageMap
+
+    def _getAllPackRefs(self, allRefs):
+        refList = []
+        for x in allRefs:
+            if type(x) is dict:
+                refList.append(x["name"])
+            else:
+                refList.append(x)
+
+        return refList
+
+    def _getAllPackRefNames(self, allRefs):
+        refList = []
+        for x in allRefs:
+            if type(x.name) is dict:
+                refList.append(x.name["name"])
+            else:
+                refList.append(x.name)
+
+        return refList
 
     def _tryGetAssemblyProjectInfo(self, packageConfig, packageName):
         assemblyProjectRelativePath = packageConfig.tryGetString(None, 'AssemblyProject', 'Path')
@@ -433,8 +475,12 @@ class ProjectSchemaLoader:
         inProgress.remove(packageInfo.name)
 
 class PackageReference:
-    def __init__(self, name, sourceDesc):
-        self.name = name
+    def __init__(self, inputObject, sourceDesc):
+        if type(inputObject) is dict:
+            self.name = inputObject["name"]
+            self.folder = inputObject["folder"]
+        else:
+            self.name = inputObject
         self.sourceDesc = sourceDesc
 
 class ProjectSchema:
@@ -464,7 +510,7 @@ class AssemblyProjectInfo:
 class PackageInfo:
     def __init__(
         self, isPluginDir, name, config, createCustomVsProject,
-        explicitDependencies, forcePluginsDir, folderType, assemblyProjectInfo, dirPath, groupedDependencies):
+        explicitDependencies, forcePluginsDir, folderType, assemblyProjectInfo, dirPath, groupedDependencies, customFolderPath=''):
 
         self.isPluginDir = isPluginDir
         self.name = name
@@ -477,6 +523,7 @@ class PackageInfo:
         self.forcePluginsDir = forcePluginsDir
         self.dirPath = dirPath
         self.groupedDependencies = groupedDependencies
+        self.customFolderPath = customFolderPath
 
     @property
     def outputDirVar(self):
