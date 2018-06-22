@@ -318,7 +318,7 @@ ProjectSettingsPath: '{0}'
             assertThat(os.path.exists(packageInfo.dirPath),
                "Could not find package with name '{0}' while processing schema '{1}'.  See build log for full object graph to see where it is referenced".format(packageInfo.name, schema.name))
 
-            outputPackageDir = self._varMgr.expandPath(packageInfo.outputDirVar + packageInfo.customFolderPath)
+            outputPackageDir = self._varMgr.expandPath(packageInfo.outputDirVar + "/{0}".format(packageInfo.folderExtension))
 
             linkDir = os.path.join(outputPackageDir, packageInfo.name)
             self._log.debug("NEW LINKDIR: {0}".format(linkDir))

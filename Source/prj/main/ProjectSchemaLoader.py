@@ -235,7 +235,7 @@ class ProjectSchemaLoader:
             packageFolder = self._varMgr.expand(packageFolder)
             packageMap[packageName] = PackageInfo(
                 isPluginsDir, packageName, packageConfig, createCustomVsProject,
-                explicitDependencies, forcePluginsDir, folderType, assemblyProjInfo, packageDir, groupedDependencies, packageFolder)
+                explicitDependencies, forcePluginsDir, folderType, assemblyProjInfo, packageDir, groupedDependencies, packageConfig.tryGetString("", 'FolderExtension'))
 
             for dependName in (explicitDependencies + groupedDependencies + extraDependencies):
                 if dependName not in self._getAllPackRefNames(allPackageRefs):
@@ -511,7 +511,7 @@ class AssemblyProjectInfo:
 class PackageInfo:
     def __init__(
         self, isPluginDir, name, config, createCustomVsProject,
-        explicitDependencies, forcePluginsDir, folderType, assemblyProjectInfo, dirPath, groupedDependencies, customFolderPath=''):
+        explicitDependencies, forcePluginsDir, folderType, assemblyProjectInfo, dirPath, groupedDependencies, folderExtension=''):
 
         self.isPluginDir = isPluginDir
         self.name = name
@@ -524,7 +524,7 @@ class PackageInfo:
         self.forcePluginsDir = forcePluginsDir
         self.dirPath = dirPath
         self.groupedDependencies = groupedDependencies
-        self.customFolderPath = customFolderPath
+        self.folderExtension = folderExtension
 
     @property
     def outputDirVar(self):
