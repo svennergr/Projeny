@@ -51,7 +51,7 @@ class LogStreamFile:
             shutil.copy2(primaryPath, previousPath)
 
         self._outputFilePath = primaryPath
-        return open(primaryPath, 'w', encoding='utf-8', errors='ignore')
+        return open(primaryPath, 'a', encoding='utf-8', errors='ignore')
 
 #if __name__ == '__main__':
     #import mtm.ioc.Container as Container

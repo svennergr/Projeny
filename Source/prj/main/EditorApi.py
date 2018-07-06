@@ -15,10 +15,12 @@ import mtm.util.MiscUtil as MiscUtil
 from mtm.util.Platforms import Platforms
 import mtm.util.PlatformUtil as PlatformUtil
 from mtm.util.Assert import *
+import ast
 
 class Runner:
     _log = Inject('Logger')
     _packageMgr = Inject('PackageManager')
+    _projectConfigChanger = Inject('ProjectConfigChanger')
     _unityHelper = Inject('UnityHelper')
     _projVsHelper = Inject('ProjenyVisualStudioHelper')
     _releaseSourceManager = Inject('ReleaseSourceManager')
@@ -94,6 +96,19 @@ class Runner:
             for projName in projectNames:
                 self._outputContent(projName + '\n')
 
+        elif self._requestId == 'addPackage':
+            self._log.debug("Running addPackage")
+            self._projectConfigChanger.addPackage(self._project, self._param1, True)
+
+        elif self._requestId == 'setPackages':
+            self._log.debug("Running setPackage")
+            packages = ast.literal_eval(self._param1)
+            if isinstance(packages, list):
+                packages = [n.strip() for n in packages]
+                self._projectConfigChanger.setPackagesForProject(self._project, packages)
+            else:
+                self._log.debug("failing setPackage")
+
         elif self._requestId == 'listReleases':
             for release in self._releaseSourceManager.lookupAllReleases():
                 self._outputContent('---\n')
@@ -131,7 +146,7 @@ def main():
     parser.add_argument("configPath", help="")
     parser.add_argument("project", help="")
     parser.add_argument('platform', type=str, choices=[x.lower() for x in Platforms.All], help='')
-    parser.add_argument('requestId', type=str, choices=['createProject', 'installRelease', 'listReleases', 'listProjects', 'listPackages', 'updateLinks', 'updateCustomSolution', 'openCustomSolution', 'openUnity', 'getPathVars'], help='')
+    parser.add_argument('requestId', type=str, choices=['createProject', 'installRelease', 'listReleases', 'listProjects', 'listPackages', 'addPackage', 'setPackages', 'updateLinks', 'updateCustomSolution', 'openCustomSolution', 'openUnity', 'getPathVars'], help='')
     parser.add_argument("param1", nargs='?', help="")
     parser.add_argument("param2", nargs='?', help="")
     parser.add_argument("param3", nargs='?', help="")

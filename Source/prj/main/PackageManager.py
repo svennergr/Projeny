@@ -188,7 +188,7 @@ ProjectSettingsPath: '{0}'
 
         for packageFolder in projConfig.packageFolders:
             folderInfo = PackageFolderInfo()
-            folderInfo.path = packageFolder
+            folderInfo.path = self._varMgr.expandPath(packageFolder).strip()
 
             if self._sys.directoryExists(packageFolder):
                 for packageName in self._sys.walkDir(packageFolder):
