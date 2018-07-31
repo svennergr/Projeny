@@ -20,6 +20,7 @@ import ast
 class Runner:
     _log = Inject('Logger')
     _packageMgr = Inject('PackageManager')
+    _schemaLoader = Inject('ProjectSchemaLoader')
     _projectConfigChanger = Inject('ProjectConfigChanger')
     _unityHelper = Inject('UnityHelper')
     _projVsHelper = Inject('ProjenyVisualStudioHelper')
@@ -131,6 +132,11 @@ class Runner:
             self._log.info("Creating new project '{0}'", newProjName)
             self._packageMgr.createProject(newProjName, self._project if duplicateSettings else None)
 
+        elif self._requestId == 'listDependencies':
+            packageName = self._param1
+            schema = self._schemaLoader.loadSchema(self._project, self._platform)
+            self._outputContent(YamlSerializer.serialize([schema.packages[x].dirPath for x in schema.packages[packageName].allDependencies]))
+
         else:
             assertThat(False, "Invalid request id '{0}'", self._requestId)
 
@@ -146,7 +152,7 @@ def main():
     parser.add_argument("configPath", help="")
     parser.add_argument("project", help="")
     parser.add_argument('platform', type=str, choices=[x.lower() for x in Platforms.All], help='')
-    parser.add_argument('requestId', type=str, choices=['createProject', 'installRelease', 'listReleases', 'listProjects', 'listPackages', 'addPackage', 'setPackages', 'updateLinks', 'updateCustomSolution', 'openCustomSolution', 'openUnity', 'getPathVars'], help='')
+    parser.add_argument('requestId', type=str, choices=['createProject', 'installRelease', 'listReleases', 'listProjects', 'listPackages', 'listDependencies', 'addPackage', 'setPackages', 'updateLinks', 'updateCustomSolution', 'openCustomSolution', 'openUnity', 'getPathVars'], help='')
     parser.add_argument("param1", nargs='?', help="")
     parser.add_argument("param2", nargs='?', help="")
     parser.add_argument("param3", nargs='?', help="")
