@@ -1,5 +1,6 @@
 
 import os
+import glob
 import mtm.ioc.Container as Container
 from mtm.ioc.Inject import Inject
 import mtm.ioc.IocAssertions as Assertions
@@ -72,4 +73,7 @@ class JunctionHelper:
             else:
                 if recursive:
                     self.removeJunctionsInDirectory(fullPath, True, projectConfig)
+                    # remove leftover empty folders
+                    if len(glob.glob(fullPath+"\\*")) == 0:
+                        self._sys.executeShellCommand('rmdir "{0}"'.format(fullPath))    
 
