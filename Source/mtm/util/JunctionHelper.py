@@ -74,6 +74,6 @@ class JunctionHelper:
                 if recursive:
                     self.removeJunctionsInDirectory(fullPath, True, projectConfig)
                     # remove leftover empty folders
-                    if len(glob.glob(fullPath+"\\*")) == 0:
+                    if len(glob.glob(fullPath+"\\*")) == 0 and len(os.listdir(fullPath)) == 0:
                         self._sys.executeShellCommand('rmdir "{0}"'.format(fullPath))    
 
